@@ -8,6 +8,7 @@ import { buildStatusEmbed } from '../embeds.js';
 import { scanAllSources } from '../../scraper/index.js';
 import { summarizeNewArticles } from '../../summarizer/index.js';
 import { setupGuildChannels } from '../channelMapper.js';
+import { publishPendingArticles } from '../../scheduler/index.js';
 import logger from '../../logger.js';
 
 export const data = new SlashCommandBuilder()
@@ -83,15 +84,26 @@ export async function execute(interaction) {
         // Phase 1: Scraping
         const scanResult = await scanAllSources();
 
-        // Phase 2: Summarization
-        const summaryResult = await summarizeNewArticles(scanResult.newArticles);
+        let summarized = 0;
+        let failedSummaries = 0;
+
+        if (scanResult.newArticles > 0) {
+          const res = await summarizeNewArticles(scanResult.newArticles);
+          summarized = res.succeeded;
+          failedSummaries = res.failed;
+          
+          // Publication immédiate après un force-scan
+          if (summarized > 0) {
+            await publishPendingArticles();
+          }
+        }
 
         await interaction.editReply(
           `✅ **Scan forcé terminé !**\n` +
           `📡 Sources scannées : ${scanResult.scanned}\n` +
           `📥 Nouveaux articles : ${scanResult.newArticles}\n` +
-          `📝 Résumés générés : ${summaryResult.succeeded}\n` +
-          `❌ Erreurs : ${scanResult.errors + summaryResult.failed}`
+          `📝 Résumés générés : ${summarized}\n` +
+          `❌ Erreurs : ${scanResult.errors + failedSummaries}`
         );
       } catch (error) {
         logger.error(`❌ Erreur scan forcé: ${error.message}`);
