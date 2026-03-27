@@ -1,0 +1,23 @@
+name: 🚀 Déploiement Automatique (CD)
+
+on:
+  push:
+    branches: [main, master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Connexion SSH et Mise à jour
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd GDG-Discord-Bot
+            git fetch --all
+            git reset --hard origin/$(git symbolic-ref --short HEAD)
+            sudo docker-compose up -d --build
+            # Nettoyage de l'espace disque
+            sudo docker image prune -f
