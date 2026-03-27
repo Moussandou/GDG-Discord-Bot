@@ -5,6 +5,7 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { getRecentArticles } from '../../database/articles.js';
 import { buildCompactEmbed } from '../embeds.js';
+import { buildArticleActionRow } from '../components.js';
 
 export const data = new SlashCommandBuilder()
   .setName('veille')
@@ -30,10 +31,21 @@ export async function execute(interaction) {
     return;
   }
 
-  const embeds = articles.map((article, i) => buildCompactEmbed(article, i));
+  const response = [];
+  
+  // Limité à 5 pour pouvoir avoir les boutons (max 5 rows par message)
+  const displayCount = Math.min(articles.length, 5);
+  
+  for (let i = 0; i < displayCount; i++) {
+    const article = articles[i];
+    const embed = buildCompactEmbed(article, i);
+    const row = buildArticleActionRow(article);
+    response.push({ embed, row });
+  }
 
   await interaction.reply({
-    content: `📰 **Les ${articles.length} dernières news tech :**`,
-    embeds: embeds.slice(0, 10), // Discord max 10 embeds
+    content: `📰 **Les ${displayCount} dernières news tech :**`,
+    embeds: response.map(r => r.embed),
+    components: response.map(r => r.row)
   });
 }

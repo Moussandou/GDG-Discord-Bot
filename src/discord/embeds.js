@@ -21,7 +21,7 @@ export function buildArticleEmbed(article) {
     .setURL(article.url)
     .setTimestamp(new Date())
     .setFooter({
-      text: `${article.is_google ? '💙 Google • ' : ''}GDG Marseille • ${article.source_name} • ${cat.label}`,
+      text: `${article.is_google ? '💙 Google Developers • ' : ''}GDG Marseille • ${article.source_name}`,
     });
 
   // Summary
@@ -68,7 +68,7 @@ export function buildArticleEmbed(article) {
   }
 
   metaFields.push({
-    name: '🏷️ Catégorie',
+    name: '🏷️ Thème',
     value: `${cat.emoji} ${cat.label}`,
     inline: true,
   });
