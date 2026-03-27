@@ -53,7 +53,7 @@ export const defaultSources = [
   },
   {
     name: 'Firebase Blog',
-    url: 'https://firebase.blog/feed',
+    url: 'https://firebase.googleblog.com/feeds/posts/default',
     category: 'cloud',
     priority: 'high',
     enabled: true,
@@ -103,7 +103,7 @@ export const defaultSources = [
   },
   {
     name: 'Vercel Blog',
-    url: 'https://vercel.com/blog/feed',
+    url: 'https://vercel.com/atom',
     category: 'web',
     priority: 'medium',
     enabled: true,
