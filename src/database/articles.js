@@ -55,9 +55,10 @@ export function getUnsummarizedArticles(limit = 10) {
   return getDb()
     .prepare(
       `SELECT * FROM articles
-       WHERE summary IS NULL AND raw_content IS NOT NULL
+       WHERE summarized_at IS NULL AND raw_content IS NOT NULL
        ORDER BY
          CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END,
+         ABS(RANDOM()) % 100,
          scraped_at DESC
        LIMIT ?`
     )
@@ -71,9 +72,10 @@ export function getUnpostedArticles(limit = 5) {
   return getDb()
     .prepare(
       `SELECT * FROM articles
-       WHERE summary IS NOT NULL AND posted_at IS NULL
+       WHERE posted_at IS NULL
        ORDER BY
          CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END,
+         ABS(RANDOM()) % 100,
          published_at DESC
        LIMIT ?`
     )

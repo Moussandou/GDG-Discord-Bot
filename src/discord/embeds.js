@@ -27,6 +27,13 @@ export function buildArticleEmbed(article) {
   // Summary
   if (article.summary) {
     embed.setDescription(article.summary);
+  } else if (article.raw_content) {
+    // Basic snippet for direct RSS mode
+    const snippet = article.raw_content
+      .replace(/<[^>]*>/g, '') // Remove HTML
+      .slice(0, 300)
+      .trim();
+    embed.setDescription(snippet ? `${snippet}...` : 'Cliquez sur le lien pour lire l\'article complet.');
   }
 
   // Large illustrative image
@@ -160,10 +167,10 @@ export function buildHelpEmbed() {
     )
     .addFields(
       {
-        name: '🤖 Intelligence Artificielle',
+        name: '🤖 Intelligence Artificielle (Optionnel)',
         value: 
-          "Mes résumés sont générés par **Google Gemini**.\n" +
-          "• Traduction automatique en français.\n" +
+          "Le bot peut fonctionner en mode direct ou avec assistance IA.\n" +
+          "• Traduction automatique (si activée).\n" +
           "• Synthèse des points clés techniques.\n" +
           "• Classification par thématique tech.",
         inline: false,

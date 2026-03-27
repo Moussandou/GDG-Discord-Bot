@@ -5,7 +5,6 @@
 import cron from 'node-cron';
 import config from '../config/index.js';
 import { scanAllSources } from '../scraper/index.js';
-import { summarizeNewArticles } from '../summarizer/index.js';
 import { getUnpostedArticles, getTodayPostedCount } from '../database/articles.js';
 import { publishArticle } from '../discord/client.js';
 import logger from '../logger.js';
@@ -29,7 +28,7 @@ export function startScheduler() {
       try {
         const scanResult = await scanAllSources();
         if (scanResult.newArticles > 0) {
-          await summarizeNewArticles(scanResult.newArticles);
+          await publishPendingArticles();
         }
       } catch (error) {
         logger.error(`❌ [CRON] Erreur scan automatique: ${error.message}`);
@@ -67,7 +66,7 @@ export function startScheduler() {
     try {
       const scanResult = await scanAllSources();
       if (scanResult.newArticles > 0) {
-        await summarizeNewArticles(Math.min(scanResult.newArticles, 10));
+        await publishPendingArticles(20);
       }
     } catch (error) {
       logger.error(`❌ Erreur scan initial: ${error.message}`);
