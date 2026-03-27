@@ -38,6 +38,7 @@ export async function fetchRSSFeed(source) {
       title: cleanText(item.title || 'Sans titre'),
       url: normalizeUrl(item.link || item.guid || ''),
       content: extractContent(item),
+      imageUrl: extractImage(item),
       publishedAt: item.isoDate || item.pubDate || new Date().toISOString(),
       sourceName: source.name,
     }));
@@ -65,6 +66,30 @@ function extractContent(item) {
     '';
 
   return cleanHtml(raw);
+}
+
+/**
+ * Extrait l'image la plus pertinente d'un item RSS.
+ */
+function extractImage(item) {
+  // 1. media:content (obj ou array)
+  if (item.mediaContent) {
+    const media = Array.isArray(item.mediaContent) ? item.mediaContent[0] : item.mediaContent;
+    if (media && media.$ && media.$.url) return media.$.url;
+    if (media && media.url) return media.url;
+  }
+
+  // 2. enclosure
+  if (item.enclosure && item.enclosure.url) {
+    return item.enclosure.url;
+  }
+
+  // 3. Image dans le contenu HTML (fallback)
+  const content = item.contentEncoded || item.content || item.description || '';
+  const imgMatch = content.match(/<img[^>]+src="([^">]+)"/i);
+  if (imgMatch) return imgMatch[1];
+
+  return null;
 }
 
 /**

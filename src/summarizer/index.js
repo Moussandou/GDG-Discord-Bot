@@ -33,6 +33,7 @@ export async function summarizeNewArticles(limit = 10) {
 
       if (summary) {
         updateArticleSummary(article.id, {
+          title_fr: summary.title_fr,
           summary: summary.summary,
           keyPoints: summary.key_points,
           techLevel: summary.tech_level,

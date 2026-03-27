@@ -21,12 +21,17 @@ export function buildArticleEmbed(article) {
     .setURL(article.url)
     .setTimestamp(new Date())
     .setFooter({
-      text: `GDG Marseille • ${article.source_name} • ${cat.label}`,
+      text: `${article.is_google ? '💙 Google • ' : ''}GDG Marseille • ${article.source_name} • ${cat.label}`,
     });
 
   // Summary
   if (article.summary) {
     embed.setDescription(article.summary);
+  }
+
+  // Large illustrative image
+  if (article.image_url) {
+    embed.setImage(article.image_url);
   }
 
   // Key Points
@@ -155,29 +160,37 @@ export function buildHelpEmbed() {
     )
     .addFields(
       {
-        name: '📋 Commandes',
-        value: [
-          '`/veille [nombre]` — Affiche les dernières news',
-          '`/sources` — Liste les sources surveillées',
-          '`/categorie` — Filtre par catégorie',
-          '`/help` — Ce message d\'aide',
-        ].join('\n'),
+        name: '🤖 Intelligence Artificielle',
+        value: 
+          "Mes résumés sont générés par **Google Gemini**.\n" +
+          "• Traduction automatique en français.\n" +
+          "• Synthèse des points clés techniques.\n" +
+          "• Classification par thématique tech.",
         inline: false,
       },
       {
-        name: '🔒 Commandes admin',
+        name: '📋 Commandes Publiques',
         value: [
-          '`/admin setup-channels` — **Préparer les salons**',
-          '`/admin force-scan` — Scanner les news immédiatement',
-          '`/admin status` — Statut technique du bot',
-          '`/admin add-source` — Ajouter un flux RSS',
-          '`/admin set-schedule` — Modifier les horaires',
+          '`/veille [nombre]` — Voir les dernières news',
+          '`/sources` — Liste des blogs surveillés',
+          '`/categorie` — Filtrer par sujet',
+          '`/help` — Afficher ce message',
         ].join('\n'),
-        inline: false,
+        inline: true,
       },
       {
-        name: '🔗 Liens',
-        value: '[GDG Marseille](https://gdg.community.dev/gdg-marseille/)',
+        name: '🛡️ Commandes Admin',
+        value: [
+          '`/admin status` — État du bot',
+          '`/admin force-scan` — Lancer un scan',
+          '`/admin setup-channels` — Créer les salons',
+          '`/admin add-source` — Nouveau flux RSS',
+        ].join('\n'),
+        inline: true,
+      },
+      {
+        name: '❓ Permissions',
+        value: "Les commandes `/admin` sont visibles uniquement par les membres ayant la permission **Gérer le serveur**.",
         inline: false,
       }
     )
@@ -189,8 +202,7 @@ export function buildHelpEmbed() {
 
 function getTitleFromArticle(article) {
   // Use the Gemini-generated French title if we stored it, else original
-  // The French title is stored as part of the summary flow
-  return article.title;
+  return article.title_fr || article.title;
 }
 
 function parseKeyPoints(keyPointsRaw) {

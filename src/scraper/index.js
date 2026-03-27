@@ -47,6 +47,7 @@ export async function scanAllSources() {
           priority: source.priority,
           isGoogle: source.isGoogle,
           rawContent: item.content,
+          imageUrl: item.imageUrl,
           publishedAt: item.publishedAt,
         });
 

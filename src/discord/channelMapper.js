@@ -14,23 +14,27 @@ import logger from '../logger.js';
  * @returns {import('discord.js').TextChannel|null}
  */
 export function resolveChannel(guild, article) {
-  // Google sources → #google-news
+  // 1. Si l'article a une catégorie spécifique (autre que general), on le met dans le salon dédié
+  if (article.category && article.category !== 'general') {
+    const channelName = categoryChannels[article.category];
+    if (channelName) {
+      const channel = findChannelByName(guild, channelName);
+      if (channel) return channel;
+    }
+  }
+
+  // 2. Si c'est un article Google (et qu'il est général ou que le salon dédié est absent)
   if (article.is_google) {
     const channel = findChannelByName(guild, googleChannel);
     if (channel) return channel;
   }
 
-  // Category → specific channel
-  const channelName = categoryChannels[article.category] || categoryChannels.general;
+  // 3. Fallback : salon général (general-tech par défaut)
+  const channelName = categoryChannels.general || 'general-tech';
   const channel = findChannelByName(guild, channelName);
-
-  if (!channel) {
-    // Fallback to #general-tech
-    const fallback = findChannelByName(guild, 'general-tech');
-    if (fallback) return fallback;
-
-    logger.warn(`⚠️ Aucun channel trouvé pour la catégorie: ${article.category}`);
-    return null;
+  
+  if (!channel && channelName !== 'general-tech') {
+    return findChannelByName(guild, 'general-tech');
   }
 
   return channel;

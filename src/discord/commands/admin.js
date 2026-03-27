@@ -91,19 +91,17 @@ export async function execute(interaction) {
           const res = await summarizeNewArticles(scanResult.newArticles);
           summarized = res.succeeded;
           failedSummaries = res.failed;
-          
-          // Publication immédiate après un force-scan
-          if (summarized > 0) {
-            await publishPendingArticles();
-          }
         }
 
+        // Publication immédiate de TOUS les articles en attente (même anciens)
+        await publishPendingArticles();
+
         await interaction.editReply(
-          `✅ **Scan forcé terminé !**\n` +
+          `✅ **Scan forcé et publication terminés !**\n` +
           `📡 Sources scannées : ${scanResult.scanned}\n` +
           `📥 Nouveaux articles : ${scanResult.newArticles}\n` +
           `📝 Résumés générés : ${summarized}\n` +
-          `❌ Erreurs : ${scanResult.errors + failedSummaries}`
+          `❌ Erreurs : ${scanResult.errors.length + failedSummaries}`
         );
       } catch (error) {
         logger.error(`❌ Erreur scan forcé: ${error.message}`);

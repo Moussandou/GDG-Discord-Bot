@@ -15,26 +15,26 @@ export function articleExists(url) {
 /**
  * Sauvegarde un nouvel article (phase scraping).
  */
-export function saveArticle({ url, title, sourceName, category, priority, isGoogle, rawContent, publishedAt }) {
+export function saveArticle({ url, title, sourceName, category, priority, isGoogle, rawContent, publishedAt, imageUrl }) {
   const stmt = getDb().prepare(`
-    INSERT OR IGNORE INTO articles (url, title, source_name, category, priority, is_google, raw_content, published_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT OR IGNORE INTO articles (url, title, source_name, category, priority, is_google, raw_content, published_at, image_url)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  const result = stmt.run(url, title, sourceName, category, priority, isGoogle ? 1 : 0, rawContent, publishedAt);
+  const result = stmt.run(url, title, sourceName, category, priority, isGoogle ? 1 : 0, rawContent, publishedAt, imageUrl);
   return result.changes > 0 ? result.lastInsertRowid : null;
 }
 
 /**
  * Met à jour le résumé d'un article (phase summarization).
  */
-export function updateArticleSummary(id, { summary, keyPoints, techLevel, emoji, category }) {
+export function updateArticleSummary(id, { title_fr, summary, keyPoints, techLevel, emoji, category }) {
   getDb()
     .prepare(
       `UPDATE articles
-       SET summary = ?, key_points = ?, tech_level = ?, emoji = ?, category = ?, summarized_at = datetime('now')
+       SET title_fr = ?, summary = ?, key_points = ?, tech_level = ?, emoji = ?, category = ?, summarized_at = datetime('now')
        WHERE id = ?`
     )
-    .run(summary, JSON.stringify(keyPoints), techLevel, emoji, category, id);
+    .run(title_fr, summary, JSON.stringify(keyPoints), techLevel, emoji, category, id);
 }
 
 /**
@@ -73,7 +73,6 @@ export function getUnpostedArticles(limit = 5) {
       `SELECT * FROM articles
        WHERE summary IS NOT NULL AND posted_at IS NULL
        ORDER BY
-         is_google DESC,
          CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END,
          published_at DESC
        LIMIT ?`

@@ -39,7 +39,9 @@ export function initDatabase() {
       summarized_at TEXT,
       posted_at TEXT,
       discord_message_id TEXT,
-      channel_id TEXT
+      channel_id TEXT,
+      image_url TEXT,
+      title_fr TEXT
     );
 
     CREATE TABLE IF NOT EXISTS custom_sources (
@@ -63,6 +65,22 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_articles_category ON articles(category);
     CREATE INDEX IF NOT EXISTS idx_articles_scraped ON articles(scraped_at);
   `);
+  
+  // Migration pour ajouter image_url aux bases existantes
+  try {
+    const tableInfo = db.prepare('PRAGMA table_info(articles)').all();
+    if (!tableInfo.some(col => col.name === 'image_url')) {
+      db.exec('ALTER TABLE articles ADD COLUMN image_url TEXT');
+      logger.info('🛰️ Migration: Colonne image_url ajoutée à la table articles');
+    }
+    
+    if (!tableInfo.some(col => col.name === 'title_fr')) {
+      db.exec('ALTER TABLE articles ADD COLUMN title_fr TEXT');
+      logger.info('🛰️ Migration: Colonne title_fr ajoutée à la table articles');
+    }
+  } catch (err) {
+    logger.error('❌ Erreur de migration: ' + err.message);
+  }
 
   logger.info('✅ Base de données initialisée');
   return db;
