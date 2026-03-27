@@ -72,9 +72,10 @@ function createFallbackSummary(article) {
   const truncated = content.slice(0, 300).trim();
 
   return {
+    title_fr: article.title, // On garde l'original si tout échoue
     summary: truncated ? `${truncated}...` : article.title,
     keyPoints: [article.title],
-    techLevel: 'Intermédiaire',
+    tech_level: 'Intermédiaire',
     emoji: '📰',
     category: article.category,
   };

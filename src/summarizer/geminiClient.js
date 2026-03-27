@@ -8,16 +8,6 @@ import logger from '../logger.js';
 
 const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
 
-const model = genAI.getGenerativeModel({
-  model: config.gemini.model,
-  generationConfig: {
-    temperature: 0.4,
-    topP: 0.9,
-    maxOutputTokens: 1024,
-    responseMimeType: 'application/json',
-  },
-});
-
 const SYSTEM_PROMPT = `Tu es un expert en veille technologique pour le GDG Marseille.
 Ton rôle est de transformer des articles techniques (souvent en anglais) en pépites d'information claires et actionnables EN FRANÇAIS.
 
@@ -27,14 +17,25 @@ Pour chaque article, tu dois retourner un JSON avec EXACTEMENT cette structure :
   "summary": "Une synthèse de 3 à 5 lignes qui explique POURQUOI c'est important. Ne te contente pas de décrire, analyse l'intérêt pour un développeur.",
   "key_points": ["Point technique majeur 1", "Bénéfice concret 2", "Changement important 3"],
   "tech_level": "Débutant" | "Intermédiaire" | "Avancé",
-  "category": "AI" | "Web" | "Mobile" | "Cloud" | "DevOps" | "General",
+  "category": "ai" | "web" | "mobile" | "cloud" | "devops" | "general",
   "emoji": "L'emoji tech le plus précis (pas de 📰 si tu peux trouver mieux)"
 }
 
-Règles de rédaction :
-- TRADUCTION : Tout doit être en français impeccable. Ne laisse aucun terme technique anglais s'il a un équivalent français courant (ex: 'Middleware' peut rester, mais 'Feature' devient 'Fonctionnalité').
-- SYNTHÈSE : Évite les phrases type 'Cet article traite de...'. Rentre directement dans le vif du sujet.
-- TON : Professionnel, enthousiaste et communautaire.`;
+Règles de rédaction STRICTES :
+1. INTERDICTION DE L'ANGLAIS : Le titre ("title_fr") et le résumé ("summary") doivent être à 100% en français. Traduis les noms de fonctionnalités si nécessaire (ex: "Hooks" peut rester tel quel, mais "What's new in React" DOIT devenir "Nouveautés de React").
+2. SYNTHÈSE : Rentre directement dans le vif du sujet. Pas de "Cet article explique...".
+3. TON : Communautaire, enthousiaste et professionnel.`;
+
+const model = genAI.getGenerativeModel({
+  model: config.gemini.model,
+  systemInstruction: SYSTEM_PROMPT,
+  generationConfig: {
+    temperature: 0.4,
+    topP: 0.9,
+    maxOutputTokens: 1024,
+    responseMimeType: 'application/json',
+  },
+});
 
 /**
  * Génère un résumé structuré d'un article via Gemini.
@@ -56,10 +57,7 @@ Retourne UNIQUEMENT le JSON structuré, sans texte supplémentaire.`;
 
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      const result = await model.generateContent([
-        { text: SYSTEM_PROMPT },
-        { text: prompt },
-      ]);
+      const result = await model.generateContent(prompt);
 
       const responseText = result.response.text();
       const parsed = JSON.parse(responseText);

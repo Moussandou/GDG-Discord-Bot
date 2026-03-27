@@ -84,7 +84,71 @@ export const defaultSources = [
     isGoogle: true,
   },
 
-  // ─── Sources Tech Générales (Priorité Moyenne) ─────────────────────
+  // ─── Sources Tech Diversifiées (Moyenne/Basse) ─────────────────────
+  {
+    name: 'The Verge - Tech',
+    url: 'https://www.theverge.com/tech/rss/index.xml',
+    category: 'general',
+    priority: 'medium',
+    enabled: true,
+    isGoogle: false,
+  },
+  {
+    name: 'TechCrunch',
+    url: 'https://techcrunch.com/feed/',
+    category: 'general',
+    priority: 'medium',
+    enabled: true,
+    isGoogle: false,
+  },
+  {
+    name: 'Vercel Blog',
+    url: 'https://vercel.com/blog/feed',
+    category: 'web',
+    priority: 'medium',
+    enabled: true,
+    isGoogle: false,
+  },
+  {
+    name: 'AWS News Blog',
+    url: 'https://aws.amazon.com/blogs/aws/feed/',
+    category: 'cloud',
+    priority: 'medium',
+    enabled: true,
+    isGoogle: false,
+  },
+  {
+    name: 'HashiCorp Blog',
+    url: 'https://www.hashicorp.com/blog/feed.xml',
+    category: 'devops',
+    priority: 'medium',
+    enabled: true,
+    isGoogle: false,
+  },
+  {
+    name: 'React Blog',
+    url: 'https://reactjs.org/feed.xml',
+    category: 'web',
+    priority: 'medium',
+    enabled: true,
+    isGoogle: false,
+  },
+  {
+    name: 'GitHub Blog',
+    url: 'https://github.blog/feed/',
+    category: 'general',
+    priority: 'medium',
+    enabled: true,
+    isGoogle: false,
+  },
+  {
+    name: 'Docker Blog',
+    url: 'https://www.docker.com/blog/feed/',
+    category: 'devops',
+    priority: 'medium',
+    enabled: true,
+    isGoogle: false,
+  },
   {
     name: 'Hacker News (Best)',
     url: 'https://hnrss.org/best',
@@ -96,22 +160,6 @@ export const defaultSources = [
   {
     name: 'Dev.to',
     url: 'https://dev.to/feed',
-    category: 'general',
-    priority: 'medium',
-    enabled: true,
-    isGoogle: false,
-  },
-  {
-    name: 'Product Hunt (Tech)',
-    url: 'https://www.producthunt.com/feed?category=tech',
-    category: 'general',
-    priority: 'medium',
-    enabled: true,
-    isGoogle: false,
-  },
-  {
-    name: 'GitHub Trending',
-    url: 'https://mshibanami.github.io/github-trending-rss/daily/all-languages.xml',
     category: 'general',
     priority: 'medium',
     enabled: true,
@@ -135,7 +183,7 @@ export const categoryChannels = {
   web: 'web-news',
   mobile: 'mobile-news',
   cloud: 'cloud-news',
-  devops: 'general-tech',
+  devops: 'devops-news', // Ajout de devops-news
   general: 'general-tech',
 };
 
