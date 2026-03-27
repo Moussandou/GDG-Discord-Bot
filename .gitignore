@@ -5,3 +5,4 @@ data/*.db-journal
 *.log
 dist/
 .DS_Store
+.gcloud
