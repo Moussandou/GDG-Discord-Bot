@@ -14,6 +14,8 @@ Il scanne automatiquement les blogs tech (Google, Hacker News, Dev.to, GitHub Tr
 - 🏷️ **Catégorisation** — AI, Web, Mobile, Cloud, DevOps, Général
 - 🔍 **Déduplication** — Aucun doublon grâce à la base SQLite
 - 💬 **Commandes slash** — `/veille`, `/sources`, `/categorie`, `/help`, `/admin`
+- 🔘 **Interactivité UX** — Boutons "Lire l'article" et "Ouvrir une discussion" (Threads)
+- 🧵 **Fils de discussion** — Création automatique de threads pour chaque news
 - 🔧 **Administration** — Ajouter/supprimer des sources, modifier les horaires
 
 ---
@@ -171,7 +173,8 @@ src/
 │   ├── index.js             # Orchestrateur
 │   └── geminiClient.js      # Client Gemini AI
 ├── discord/
-│   ├── client.js            # Client Discord
+│   ├── client.js            # Client Discord + Gestion interactions
+│   ├── components.js        # Constructeurs de boutons et composants UI
 │   ├── embeds.js            # Constructeur d'embeds
 │   ├── channelMapper.js     # Mapping catégorie → channel
 │   └── commands/
@@ -195,7 +198,7 @@ src/
 5. Activer les intents **SERVER MEMBERS** et **MESSAGE CONTENT** (si nécessaire)
 6. Aller dans **OAuth2** → URL Generator :
    - Scopes: `bot`, `applications.commands`
-   - Permissions: `Send Messages`, `Embed Links`, `Read Message History`, `Use Slash Commands`
+   - Permissions: `Send Messages`, `Embed Links`, `Read Message History`, `Use Slash Commands`, `Create Public Threads`, `Send Messages in Threads`
 7. Copier l'URL générée et inviter le bot sur votre serveur
 
 ---
