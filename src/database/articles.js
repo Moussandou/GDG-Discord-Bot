@@ -162,20 +162,32 @@ export function setSetting(key, value) {
  */
 export function getStats() {
   const db = getDb();
-  const totalArticles = db.prepare('SELECT COUNT(*) as c FROM articles').get().c;
-  const totalPosted = db.prepare('SELECT COUNT(*) as c FROM articles WHERE posted_at IS NOT NULL').get().c;
-  const todayPosted = getTodayPostedCount();
-  const pendingArticles = db
-    .prepare('SELECT COUNT(*) as c FROM articles WHERE summary IS NOT NULL AND posted_at IS NULL')
-    .get().c;
-  const lastPosted = db
-    .prepare('SELECT posted_at FROM articles WHERE posted_at IS NOT NULL ORDER BY posted_at DESC LIMIT 1')
-    .get();
-  return {
-    totalArticles,
-    totalPosted,
-    todayPosted,
-    pendingArticles,
-    lastPostedAt: lastPosted?.posted_at || 'Jamais',
-  };
+  try {
+    const totalArticles = db.prepare('SELECT COUNT(*) as c FROM articles').get()?.c || 0;
+    const totalPosted = db.prepare('SELECT COUNT(*) as c FROM articles WHERE posted_at IS NOT NULL').get()?.c || 0;
+    const todayPosted = getTodayPostedCount() || 0;
+    const pendingArticles = db
+      .prepare('SELECT COUNT(*) as c FROM articles WHERE summary IS NOT NULL AND posted_at IS NULL')
+      .get()?.c || 0;
+    const lastPosted = db
+      .prepare('SELECT posted_at FROM articles WHERE posted_at IS NOT NULL ORDER BY posted_at DESC LIMIT 1')
+      .get();
+
+    return {
+      totalArticles,
+      totalPosted,
+      todayPosted,
+      pendingArticles,
+      lastPostedAt: lastPosted?.posted_at || 'Jamais',
+    };
+  } catch (error) {
+    logger.error('❌ Erreur getStats database:', error);
+    return {
+      totalArticles: 0,
+      totalPosted: 0,
+      todayPosted: 0,
+      pendingArticles: 0,
+      lastPostedAt: 'Erreur DB',
+    };
+  }
 }

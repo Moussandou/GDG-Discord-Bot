@@ -77,16 +77,21 @@ export async function startDiscordBot() {
       await command.execute(interaction);
       logger.info(`✅ Commande exécutée: /${interaction.commandName} par ${interaction.user.tag}`);
     } catch (error) {
-      logger.error(`❌ Erreur commande /${interaction.commandName}: ${error.message}`);
+      logger.error(`❌ Erreur commande /${interaction.commandName}: ${error.message}`, error);
+      
       const reply = {
         content: '❌ Une erreur est survenue lors de l\'exécution de cette commande.',
         ephemeral: true,
       };
 
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp(reply);
-      } else {
-        await interaction.reply(reply);
+      try {
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp(reply);
+        } else {
+          await interaction.reply(reply);
+        }
+      } catch (replyError) {
+        logger.error(`❌ Impossible d'envoyer le message d'erreur: ${replyError.message}`);
       }
     }
   });

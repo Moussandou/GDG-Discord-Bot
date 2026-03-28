@@ -68,10 +68,16 @@ export async function execute(interaction) {
 
   switch (subcommand) {
     case 'status': {
-      const stats = getStats();
-      const uptime = process.uptime() * 1000;
-      const embed = buildStatusEmbed(stats, uptime);
-      await interaction.reply({ embeds: [embed], ephemeral: true });
+      await interaction.deferReply({ ephemeral: true });
+      try {
+        const stats = getStats();
+        const uptime = process.uptime() * 1000;
+        const embed = buildStatusEmbed(stats, uptime);
+        await interaction.editReply({ embeds: [embed] });
+      } catch (error) {
+        logger.error(`❌ Erreur status: ${error.message}`, error);
+        await interaction.editReply("❌ Impossible de générer le statut pour le moment.");
+      }
       break;
     }
 
