@@ -4,7 +4,7 @@
 
 import 'dotenv/config';
 
-const required = ['DISCORD_TOKEN', 'DISCORD_CLIENT_ID', 'DISCORD_GUILD_ID', 'GEMINI_API_KEY'];
+const required = ['DISCORD_TOKEN', 'DISCORD_CLIENT_ID', 'GEMINI_API_KEY'];
 
 // Validate required env vars
 for (const key of required) {
@@ -27,7 +27,10 @@ const config = {
   discord: {
     token: process.env.DISCORD_TOKEN,
     clientId: process.env.DISCORD_CLIENT_ID,
-    guildId: process.env.DISCORD_GUILD_ID,
+    guildIds: process.env.DISCORD_GUILD_ID && process.env.DISCORD_GUILD_ID !== 'ALL'
+      ? process.env.DISCORD_GUILD_ID.split(',').map(id => id.trim())
+      : [],
+    isAllGuilds: !process.env.DISCORD_GUILD_ID || process.env.DISCORD_GUILD_ID === 'ALL',
   },
 
   // Gemini AI

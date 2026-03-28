@@ -45,13 +45,16 @@ export async function startDiscordBot() {
   // ─── Event: Ready ──────────────────────────────────────────────────
   client.once(Events.ClientReady, (readyClient) => {
     logger.info(`✅ Bot connecté en tant que ${readyClient.user.tag}`);
-    logger.info(`📡 Serveurs: ${readyClient.guilds.cache.size}`);
+    logger.info(`📡 Serveurs connectés: ${readyClient.guilds.cache.size}`);
 
-    // Check required channels
-    const guild = readyClient.guilds.cache.get(config.discord.guildId);
-    if (guild) {
+    // Check required channels for each guild
+    readyClient.guilds.cache.forEach((guild) => {
+      // If we limited guilds, only check those
+      if (!config.discord.isAllGuilds && !config.discord.guildIds.includes(guild.id)) return;
+      
+      logger.info(`🔍 Vérification des salons sur : ${guild.name} (${guild.id})`);
       checkRequiredChannels(guild);
-    }
+    });
   });
 
   // ─── Event: Interaction ────────────────────────────────────────────
@@ -104,36 +107,57 @@ export async function publishArticle(article) {
     return false;
   }
 
-  const guild = client.guilds.cache.get(config.discord.guildId);
-  if (!guild) {
-    logger.error(`❌ Guild non trouvé: ${config.discord.guildId}`);
+  // Identify target guilds
+  const targetGuilds = [];
+  if (config.discord.isAllGuilds) {
+    client.guilds.cache.forEach(g => targetGuilds.push(g));
+  } else {
+    for (const id of config.discord.guildIds) {
+      const g = client.guilds.cache.get(id);
+      if (g) targetGuilds.push(g);
+      else logger.error(`❌ Guild non trouvé : ${id}`);
+    }
+  }
+
+  if (targetGuilds.length === 0) {
+    logger.error('❌ Aucun serveur cible trouvé pour la publication.');
     return false;
   }
 
-  const channel = resolveChannel(guild, article);
-  if (!channel) {
-    logger.error(`❌ Aucun channel trouvé pour l'article: ${article.title}`);
-    return false;
+  let successCount = 0;
+
+  for (const guild of targetGuilds) {
+    const channel = resolveChannel(guild, article);
+    if (!channel) {
+      logger.error(`❌ Aucun salon trouvé sur ${guild.name} pour : ${article.title}`);
+      continue;
+    }
+
+    try {
+      const embed = buildArticleEmbed(article);
+      const row = buildArticleActionRow(article);
+      
+      const message = await channel.send({ 
+        embeds: [embed],
+        components: [row]
+      });
+
+      // Mark article as posted in DB (only once, we can store the first success's info or just mark as true)
+      // Note: markAsPosted currently takes (id, messageId, channelId). 
+      // If we post to multiple guilds, which one to store?
+      // For now let's just mark it as posted using the first successful one.
+      if (successCount === 0) {
+        markAsPosted(article.id, message.id, channel.id);
+      }
+
+      logger.info(`📤 Publié dans #${channel.name} (${guild.name}): ${article.title.slice(0, 50)}...`);
+      successCount++;
+    } catch (error) {
+      logger.error(`❌ Erreur sur ${guild.name} (#${channel.name}): ${error.message}`);
+    }
   }
 
-  try {
-    const embed = buildArticleEmbed(article);
-    const row = buildArticleActionRow(article);
-    
-    const message = await channel.send({ 
-      embeds: [embed],
-      components: [row]
-    });
-
-    // Mark article as posted in DB
-    markAsPosted(article.id, message.id, channel.id);
-
-    logger.info(`📤 Publié dans #${channel.name}: ${article.title.slice(0, 50)}...`);
-    return true;
-  } catch (error) {
-    logger.error(`❌ Erreur publication dans #${channel.name}: ${error.message}`);
-    return false;
-  }
+  return successCount > 0;
 }
 
 /**
