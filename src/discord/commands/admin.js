@@ -16,7 +16,7 @@ export const data = new SlashCommandBuilder()
   .setDescription('Commandes d\'administration du bot')
   .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
   .addSubcommand((sub) =>
-    sub.setName('status').setDescription('Affiche le statut du bot')
+    sub.setName('force-weekly-summary').setDescription('Déclenche manuellement le récapitulatif hebdomadaire')
   )
   .addSubcommand((sub) =>
     sub.setName('force-scan').setDescription('Force un scan immédiat de toutes les sources')
@@ -57,6 +57,17 @@ export const data = new SlashCommandBuilder()
           .setName('hours')
           .setDescription('Heures de publication (ex: 9,13,18)')
           .setRequired(true)
+      )
+  )
+  .addSubcommand((sub) =>
+    sub
+      .setName('set-weekly-channel')
+      .setDescription('Définit le salon cible pour le récapitulatif hebdomadaire')
+      .addChannelOption((opt) => 
+        opt.setName('channel')
+          .setDescription('Salon textuel')
+          .setRequired(true)
+          .addChannelTypes(0, 5) // GUILD_TEXT and GUILD_ANNOUNCEMENT
       )
   )
   .addSubcommand((sub) =>
@@ -112,6 +123,24 @@ export async function execute(interaction) {
       } catch (error) {
         logger.error(`❌ Erreur scan forcé: ${error.message}`);
         await interaction.editReply(`❌ Erreur durant le scan : ${error.message}`);
+      }
+      break;
+    }
+
+    case 'force-weekly-summary': {
+      await interaction.deferReply({ ephemeral: true });
+      try {
+        const { publishWeeklySummary } = await import('../client.js');
+        const success = await publishWeeklySummary();
+        
+        if (success) {
+          await interaction.editReply("✅ Récapitulatif hebdomadaire envoyé avec succès !");
+        } else {
+          await interaction.editReply("⚠️ Le récapitulatif a été généré mais aucun article n'a été trouvé ou une erreur est survenue (consultez les logs).");
+        }
+      } catch (error) {
+        logger.error(`❌ Erreur force-weekly-summary: ${error.message}`);
+        await interaction.editReply(`❌ Erreur lors de l'envoi du récapitulatif : ${error.message}`);
       }
       break;
     }
@@ -185,6 +214,18 @@ export async function execute(interaction) {
         ephemeral: true,
       });
       logger.info(`⏰ Horaires modifiés: ${parsed.join(',')}`);
+      break;
+    }
+
+    case 'set-weekly-channel': {
+      const channel = interaction.options.getChannel('channel');
+      setSetting('weekly_report_channel', channel.id);
+      
+      await interaction.reply({
+        content: `✅ Le récapitulatif hebdomadaire sera désormais posté dans <#${channel.id}>.`,
+        ephemeral: true,
+      });
+      logger.info(`📍 Salon hebdomadaire défini: #${channel.name} (${channel.id})`);
       break;
     }
 

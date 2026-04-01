@@ -119,6 +119,25 @@ export function getRecentArticles(limit = 5, category = null) {
 }
 
 /**
+ * Récupère les meilleurs articles des 7 derniers jours pour le récapitulatif hebdo.
+ */
+export function getWeeklyArticles(limit = 10) {
+  return getDb()
+    .prepare(
+      `SELECT * FROM articles
+       WHERE summarized_at IS NOT NULL
+       AND (datetime(scraped_at) >= datetime('now', '-7 days')
+            OR datetime(published_at) >= datetime('now', '-7 days'))
+       ORDER BY
+         is_google DESC,
+         CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END,
+         published_at DESC
+       LIMIT ?`
+    )
+    .all(limit);
+}
+
+/**
  * Récupère toutes les sources custom ajoutées par les admins.
  */
 export function getCustomSources() {

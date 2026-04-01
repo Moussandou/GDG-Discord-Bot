@@ -166,6 +166,80 @@ export async function publishArticle(article) {
 }
 
 /**
+ * Publie le récapitulatif hebdomadaire.
+ */
+export async function publishWeeklySummary() {
+  if (!client || !client.isReady()) {
+    logger.error('❌ Client Discord non prêt');
+    return false;
+  }
+
+  const { getWeeklyArticles, getSetting } = await import('../database/articles.js');
+  const articles = getWeeklyArticles(10);
+
+  if (articles.length === 0) {
+    logger.info('📊 Aucun article trouvé pour le récapitulatif hebdomadaire.');
+    return false;
+  }
+
+  const channelId = getSetting('weekly_report_channel');
+  
+  // Target guilds
+  const targetGuilds = [];
+  if (config.discord.isAllGuilds) {
+    client.guilds.cache.forEach(g => targetGuilds.push(g));
+  } else {
+    for (const id of config.discord.guildIds) {
+      const g = client.guilds.cache.get(id);
+      if (g) targetGuilds.push(g);
+    }
+  }
+
+  let fullSuccess = true;
+
+  for (const guild of targetGuilds) {
+    let targetChannel;
+
+    if (channelId) {
+      targetChannel = guild.channels.cache.get(channelId);
+    }
+
+    // Fallback if channel not found or not set
+    if (!targetChannel) {
+      targetChannel = resolveChannel(guild, { category: 'general' });
+    }
+
+    if (!targetChannel) {
+      logger.error(`❌ Aucun salon trouvé sur ${guild.name} pour le récapitulatif hebdomadaire.`);
+      fullSuccess = false;
+      continue;
+    }
+
+    try {
+      let messageContent = `📅 **Voici les news de la semaine :**\n\n`;
+
+      for (const article of articles) {
+        const title = article.title_fr || article.title;
+        // Use summary if available, else short version of title
+        const brief = article.summary ? (article.summary.length > 150 ? article.summary.slice(0, 150) + '...' : article.summary) : title;
+        
+        messageContent += `🔹 **${title}** : ${brief} [En savoir plus](${article.url})\n`;
+      }
+
+      messageContent += `\n📢 *Rejoins notre salon #google-news pour en savoir plus*`;
+
+      await targetChannel.send({ content: messageContent });
+      logger.info(`📤 Récapitulatif hebdomadaire envoyé dans #${targetChannel.name} (${guild.name})`);
+    } catch (error) {
+      logger.error(`❌ Erreur envoi récapitulatif sur ${guild.name}: ${error.message}`);
+      fullSuccess = false;
+    }
+  }
+
+  return fullSuccess;
+}
+
+/**
  * Retourne le client Discord (pour le scheduler).
  */
 export function getClient() {

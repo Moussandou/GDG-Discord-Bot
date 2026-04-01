@@ -6,7 +6,7 @@ import cron from 'node-cron';
 import config from '../config/index.js';
 import { scanAllSources } from '../scraper/index.js';
 import { getUnpostedArticles, getTodayPostedCount } from '../database/articles.js';
-import { publishArticle } from '../discord/client.js';
+import { publishArticle, publishWeeklySummary } from '../discord/client.js';
 import logger from '../logger.js';
 
 const scheduledJobs = [];
@@ -27,9 +27,12 @@ export function startScheduler() {
       logger.info('⏰ [CRON] Démarrage du scan automatique...');
       try {
         const scanResult = await scanAllSources();
+        // Individual automatic publishing is disabled as per new requirements
+        /* 
         if (scanResult.newArticles > 0) {
           await publishPendingArticles();
         }
+        */
       } catch (error) {
         logger.error(`❌ [CRON] Erreur scan automatique: ${error.message}`);
       }
@@ -39,35 +42,37 @@ export function startScheduler() {
   scheduledJobs.push(scrapeJob);
   logger.info(`⏰ Cron scraping configuré: toutes les ${scrapeIntervalHours}h (${scrapeExpression})`);
 
-  // ─── Publication Jobs ────────────────────────────────────────────────
-  // Un cron job par heure de publication configurée
-  for (const hour of publishHours) {
-    const publishExpression = `0 ${hour} * * *`;
+  // ─── Weekly Summary Job ──────────────────────────────────────────────
+  // Chaque mercredi à 9h00 (0 9 * * 3)
+  const weeklyExpression = '0 9 * * 3';
+  const weeklyJob = cron.schedule(
+    weeklyExpression,
+    async () => {
+      logger.info('⏰ [CRON] Génération du récapitulatif hebdomadaire...');
+      try {
+        await publishWeeklySummary();
+      } catch (error) {
+        logger.error(`❌ [CRON] Erreur récapitulatif hebdomadaire: ${error.message}`);
+      }
+    },
+    { timezone, name: 'weekly-summary' }
+  );
+  scheduledJobs.push(weeklyJob);
+  logger.info(`⏰ Cron récapitutalif hebdomadaire configuré: mercredi 09:00 (${weeklyExpression})`);
 
-    const publishJob = cron.schedule(
-      publishExpression,
-      async () => {
-        logger.info(`⏰ [CRON] Publication automatique à ${hour}h...`);
-        try {
-          await publishPendingArticles(maxDailyNews);
-        } catch (error) {
-          logger.error(`❌ [CRON] Erreur publication: ${error.message}`);
-        }
-      },
-      { timezone, name: `publish-${hour}h` }
-    );
-    scheduledJobs.push(publishJob);
-    logger.info(`⏰ Cron publication configuré: ${hour}h (${publishExpression})`);
-  }
+  // (L'ancien système de publication horaire individuelle est désactivé)
 
   // ─── Initial scan on startup (delayed 10s to let Discord connect) ──
   setTimeout(async () => {
     logger.info('🚀 Scan initial au démarrage...');
     try {
       const scanResult = await scanAllSources();
+      // Individual automatic publishing is disabled as per new requirements
+      /*
       if (scanResult.newArticles > 0) {
         await publishPendingArticles(20);
       }
+      */
     } catch (error) {
       logger.error(`❌ Erreur scan initial: ${error.message}`);
     }
