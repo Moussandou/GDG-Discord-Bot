@@ -16,14 +16,15 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -e
             cd GDG-Discord-Bot
             git fetch --all
             git reset --hard origin/$(git symbolic-ref --short HEAD)
             
-            # 1. Sauvegarde de pré-déploiement
-            mkdir -p data/backups
+            # 1. Sauvegarde de pré-déploiement (avec sudo pour les permissions)
+            sudo mkdir -p data/backups
             if [ -f "data/veille.db" ]; then
-              cp data/veille.db "data/backups/veille-pre-deploy-$(date +%Y%m%d-%H%M%S).db.bak"
+              sudo cp data/veille.db "data/backups/veille-pre-deploy-$(date +%Y%m%d-%H%M%S).db.bak"
             fi
 
             # 2. Arret propre pour fermer la DB (via le signal TERM que nous gérons maintenant)
@@ -35,5 +36,13 @@ jobs:
             # 4. Reconstruction et démarrage
             sudo docker-compose up -d --build
             
-            # Nettoyage de l'espace disque
+            # 5. Nettoyage de l'espace disque
             sudo docker image prune -f
+
+            # 6. Vérification du statut
+            echo "🔍 Vérification du statut du bot..."
+            sleep 5
+            sudo docker-compose ps
+            
+            # 7. Affichage des 20 dernières lignes de logs pour diagnostic rapide
+            sudo docker-compose logs --tail=20
