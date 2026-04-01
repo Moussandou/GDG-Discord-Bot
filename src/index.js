@@ -2,7 +2,7 @@
 // Point d'entrée principal du bot.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { initDatabase } from './database/index.js';
+import { initDatabase, closeDatabase } from './database/index.js';
 import { startDiscordBot } from './discord/client.js';
 import { startScheduler, stopScheduler } from './scheduler/index.js';
 import logger from './logger.js';
@@ -38,6 +38,7 @@ async function main() {
 function shutdown(signal) {
   logger.info(`\n🛑 ${signal} reçu, arrêt du bot...`);
   stopScheduler();
+  closeDatabase();
   process.exit(0);
 }
 

@@ -18,6 +18,8 @@ export function initDatabase() {
 
   // Enable WAL mode for better concurrent read performance
   db.pragma('journal_mode = WAL');
+  // Safer balance between performance and durability in WAL mode
+  db.pragma('synchronous = NORMAL');
 
   // Create tables
   db.exec(`
@@ -93,4 +95,12 @@ export function getDb() {
   return db;
 }
 
-export default { initDatabase, getDb };
+export function closeDatabase() {
+  if (db) {
+    db.close();
+    logger.info('📦 Base de données fermée proprement.');
+    db = null;
+  }
+}
+
+export default { initDatabase, getDb, closeDatabase };
