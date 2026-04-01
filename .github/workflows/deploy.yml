@@ -19,6 +19,15 @@ jobs:
             cd GDG-Discord-Bot
             git fetch --all
             git reset --hard origin/$(git symbolic-ref --short HEAD)
+            
+            # Arret propre pour fermer la DB (via le signal TERM que nous gérons maintenant)
+            sudo docker-compose down
+            
+            # Nettoyage des fichiers de verrouillage SQLite au cas où
+            sudo rm -f data/*.db-shm data/*.db-wal
+            
+            # Reconstruction et démarrage
             sudo docker-compose up -d --build
+            
             # Nettoyage de l'espace disque
             sudo docker image prune -f
