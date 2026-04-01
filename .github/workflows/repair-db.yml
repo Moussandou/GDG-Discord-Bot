@@ -1,0 +1,52 @@
+name: 🏥 R\u00e9paration Base de donn\u00e9es (DB Repair)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: \ud83d\udee0\ufe0f Connexion SSH et R\u00e9paration
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            echo "\ud83d\uded1 Arr\u00eat du bot pour r\u00e9paration..."
+            cd GDG-Discord-Bot
+            sudo docker-compose down
+            
+            echo "\ud83d\udce6 Sauvegarde de la base corrompue..."
+            sudo mkdir -p data/backups
+            TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+            if [ -f "data/veille.db" ]; then
+              sudo cp data/veille.db "data/backups/veille-corrupted-${TIMESTAMP}.db.bak"
+            fi
+            
+            echo "\ud83e\uddf9 Nettoyage des journaux (WAL/SHM)..."
+            sudo rm -f data/*.db-shm data/*.db-wal
+            
+            echo "\u2699\ufe0f Tentative de r\u00e9cup\u00e9ration via .dump..."
+            # Using an ephemeral alpine container with sqlite3 installed to repair the DB safely
+            # We use "|| true" because the .dump command will likely exit with code 1 due to the corruption
+            sudo docker run --rm -v $(pwd)/data:/data alpine sh -c "apk add --no-cache sqlite && (sqlite3 /data/veille.db .dump | sqlite3 /data/veille-recovered.db || true)"
+            
+            if [ -s "data/veille-recovered.db" ]; then
+                echo "\ud83d\udd04 Remplacement de l'ancienne base de donn\u00e9es..."
+                sudo mv data/veille.db data/veille.db.corrupted
+                sudo mv data/veille-recovered.db data/veille.db
+                echo "\u2705 R\u00e9paration termin\u00e9e avec succ\u00e8s !"
+            else
+                echo "\u274c \u00c9chec de la r\u00e9cup\u00e9ration de la base de donn\u00e9es ou r\u00e9sultat vide."
+            fi
+            
+            echo "\ud83d\ude80 Red\u00e9marrage du bot avec la base assainie..."
+            sudo docker-compose up -d --build
+            
+            echo "\ud83d\udd0d V\u00e9rification du statut..."
+            sleep 5
+            sudo docker-compose ps
+            sudo docker-compose logs --tail=10
