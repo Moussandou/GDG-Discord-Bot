@@ -7,7 +7,7 @@ import config from '../config/index.js';
 import { scanAllSources } from '../scraper/index.js';
 import { getUnpostedArticles, getTodayPostedCount } from '../database/articles.js';
 import { publishArticle, publishWeeklySummary } from '../discord/client.js';
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import logger from '../logger.js';
 
@@ -79,8 +79,21 @@ export function startScheduler() {
         copyFileSync(config.dbPath, backupPath);
         logger.info(`✅ Sauvegarde créée: ${backupPath}`);
         
-        // Optionnel: Nettoyage des anciennes sauvegardes (garder les 7 dernières)
-        // ... (implémentation simplifiée ici)
+        // Nettoyage des anciennes sauvegardes (garder les 7 dernières)
+        const files = readdirSync(backupDir)
+          .filter(f => f.endsWith('.db.bak'))
+          .map(f => join(backupDir, f));
+        
+        if (files.length > 7) {
+          // Sort by creation time (implicitly by name if timestamp format is YYYY-MM-DD...)
+          files.sort();
+          const toDelete = files.slice(0, files.length - 7);
+          
+          for (const file of toDelete) {
+            unlinkSync(file);
+            logger.info(`🗑️ Ancienne sauvegarde supprimée: ${file}`);
+          }
+        }
       } catch (error) {
         logger.error(`❌ [CRON] Erreur sauvegarde: ${error.message}`);
       }

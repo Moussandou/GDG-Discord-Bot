@@ -20,13 +20,19 @@ jobs:
             git fetch --all
             git reset --hard origin/$(git symbolic-ref --short HEAD)
             
-            # Arret propre pour fermer la DB (via le signal TERM que nous gérons maintenant)
+            # 1. Sauvegarde de pré-déploiement
+            mkdir -p data/backups
+            if [ -f "data/veille.db" ]; then
+              cp data/veille.db "data/backups/veille-pre-deploy-$(date +%Y%m%d-%H%M%S).db.bak"
+            fi
+
+            # 2. Arret propre pour fermer la DB (via le signal TERM que nous gérons maintenant)
             sudo docker-compose down
             
-            # Nettoyage des fichiers de verrouillage SQLite au cas où
+            # 3. Nettoyage des fichiers de verrouillage SQLite au cas où
             sudo rm -f data/*.db-shm data/*.db-wal
             
-            # Reconstruction et démarrage
+            # 4. Reconstruction et démarrage
             sudo docker-compose up -d --build
             
             # Nettoyage de l'espace disque
