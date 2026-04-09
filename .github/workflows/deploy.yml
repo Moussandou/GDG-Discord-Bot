@@ -35,14 +35,18 @@ jobs:
             
             # 4. Reconstruction et démarrage
             sudo docker-compose up -d --build
-            
-            # 5. Nettoyage de l'espace disque
+
+            # 5. Enregistrement des slash commands Discord
+            echo "Enregistrement des slash commands..."
+            sleep 5
+            sudo docker-compose exec -T bot npm run deploy-commands
+
+            # 6. Nettoyage de l'espace disque
             sudo docker image prune -f
 
-            # 6. Vérification du statut
-            echo "🔍 Vérification du statut du bot..."
-            sleep 5
+            # 7. Vérification du statut
+            echo "Vérification du statut du bot..."
             sudo docker-compose ps
-            
-            # 7. Affichage des 20 dernières lignes de logs pour diagnostic rapide
+
+            # 8. Affichage des 20 dernières lignes de logs pour diagnostic rapide
             sudo docker-compose logs --tail=20
