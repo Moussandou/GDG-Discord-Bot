@@ -38,8 +38,8 @@ jobs:
 
             # 5. Enregistrement des slash commands Discord
             echo "Enregistrement des slash commands..."
-            sleep 5
-            sudo docker-compose exec -T bot npm run deploy-commands
+            sleep 10
+            sudo docker-compose exec -T veille-bot npm run deploy-commands
 
             # 6. Nettoyage de l'espace disque
             sudo docker image prune -f
