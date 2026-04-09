@@ -7,8 +7,6 @@ import config from '../config/index.js';
 import { scanAllSources } from '../scraper/index.js';
 import { getUnpostedArticles, getTodayPostedCount } from '../database/articles.js';
 import { publishArticle, publishWeeklySummary } from '../discord/client.js';
-import { copyFileSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs';
-import { join, dirname } from 'node:path';
 import logger from '../logger.js';
 
 const scheduledJobs = [];
@@ -62,46 +60,6 @@ export function startScheduler() {
   scheduledJobs.push(weeklyJob);
   logger.info(`⏰ Cron récapitutalif hebdomadaire configuré: mercredi 09:00 (${weeklyExpression})`);
   
-  // ─── Daily Backup Job ──────────────────────────────────────────────
-  // Chaque jour à 04:00 (0 4 * * *)
-  const backupExpression = '0 4 * * *';
-  const backupJob = cron.schedule(
-    backupExpression,
-    async () => {
-      logger.info('⏰ [CRON] Création de la sauvegarde quotidienne...');
-      try {
-        const backupDir = join(dirname(config.dbPath), 'backups');
-        mkdirSync(backupDir, { recursive: true });
-        
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const backupPath = join(backupDir, `veille-${timestamp}.db.bak`);
-        
-        copyFileSync(config.dbPath, backupPath);
-        logger.info(`✅ Sauvegarde créée: ${backupPath}`);
-        
-        // Nettoyage des anciennes sauvegardes (garder les 7 dernières)
-        const files = readdirSync(backupDir)
-          .filter(f => f.endsWith('.db.bak'))
-          .map(f => join(backupDir, f));
-        
-        if (files.length > 7) {
-          // Sort by creation time (implicitly by name if timestamp format is YYYY-MM-DD...)
-          files.sort();
-          const toDelete = files.slice(0, files.length - 7);
-          
-          for (const file of toDelete) {
-            unlinkSync(file);
-            logger.info(`🗑️ Ancienne sauvegarde supprimée: ${file}`);
-          }
-        }
-      } catch (error) {
-        logger.error(`❌ [CRON] Erreur sauvegarde: ${error.message}`);
-      }
-    },
-    { timezone, name: 'daily-backup' }
-  );
-  scheduledJobs.push(backupJob);
-  logger.info(`⏰ Cron sauvegarde configuré: tous les jours à 04:00 (${backupExpression})`);
 
   // (L'ancien système de publication horaire individuelle est désactivé)
 

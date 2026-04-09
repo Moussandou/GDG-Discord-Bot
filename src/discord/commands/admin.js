@@ -16,6 +16,9 @@ export const data = new SlashCommandBuilder()
   .setDescription('Commandes d\'administration du bot')
   .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
   .addSubcommand((sub) =>
+    sub.setName('status').setDescription('Affiche le statut du bot')
+  )
+  .addSubcommand((sub) =>
     sub.setName('force-weekly-summary').setDescription('Déclenche manuellement le récapitulatif hebdomadaire')
   )
   .addSubcommand((sub) =>

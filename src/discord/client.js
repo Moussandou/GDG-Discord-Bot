@@ -216,17 +216,18 @@ export async function publishWeeklySummary() {
     }
 
     try {
-      let messageContent = `📅 **Voici les news de la semaine :**\n\n`;
+      let messageContent = `**Voici les news de la semaine :**\n\n`;
 
       for (const article of articles) {
         const title = article.title_fr || article.title;
-        // Use summary if available, else short version of title
-        const brief = article.summary ? (article.summary.length > 150 ? article.summary.slice(0, 150) + '...' : article.summary) : title;
-        
-        messageContent += `🔹 **${title}** : ${brief} [En savoir plus](${article.url})\n`;
+        const brief = article.summary
+          ? article.summary.split('.')[0].trim()
+          : title;
+
+        messageContent += `**${title}** : ${brief} [Lire l'article](${article.url})\n`;
       }
 
-      messageContent += `\n📢 *Rejoins notre salon #google-news pour en savoir plus*`;
+      messageContent += `\nRejoins notre salon <#1487231524146249930> pour en savoir plus`;
 
       await targetChannel.send({ content: messageContent });
       logger.info(`📤 Récapitulatif hebdomadaire envoyé dans #${targetChannel.name} (${guild.name})`);
